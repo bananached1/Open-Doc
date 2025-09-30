@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Text Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif;
+            background: #f9fbfd;
+            color: #202124;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #f9fbfd;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #fff;
+            padding: 8px 16px;
+            border-bottom: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .doc-title {
+            font-size: 18px;
+            border: none;
+            outline: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            font-weight: 400;
+            color: #202124;
+        }
+
+        .doc-title:hover {
+            background: #f1f3f4;
+        }
+
+        .doc-title:focus {
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+
+        .btn-primary:hover {
+            background: #1765cc;
+            box-shadow: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #dadce0;
+        }
+
+        .toolbar {
+            background: #edf2fa;
+            padding: 8px 16px;
+            border-bottom: 1px solid #c6d7f1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            align-items: center;
+            position: sticky;
+            top: 61px;
+            z-index: 99;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 2px;
+            padding: 0 8px;
+            border-right: 1px solid #c6d7f1;
+        }
+
+        .toolbar-group:first-child {
+            padding-left: 0;
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            color: #444746;
+        }
+
+        .toolbar-btn:hover {
+            background: #d3e3fd;
+        }
+
+        .toolbar-btn.active {
+            background: #c2e7ff;
+            color: #1967d2;
+        }
+
+        .toolbar-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #c6d7f1;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            color: #202124;
+            font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif;
+        }
+
+        select:hover {
+            background: #f8f9fa;
+            border-color: #9aa5b5;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.15s;
+        }
+
+        .color-btn:hover {
+            background: #d3e3fd;
+        }
+
+        .color-btn input[type="color"] {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .editor-wrapper {
+            max-width: 816px;
+            margin: 24px auto;
+            background: white;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15);
+            min-height: calc(100vh - 200px);
+        }
+
+        .editor {
+            padding: 96px 96px;
+            outline: none;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #202124;
+            font-family: Arial, sans-serif;
+        }
+
+        .editor:focus {
+            outline: none;
+        }
+
+        .history-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: 0 8px 10px 1px rgba(0,0,0,.14), 0 3px 14px 2px rgba(0,0,0,.12), 0 5px 5px -3px rgba(0,0,0,.2);
+            transition: right 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .history-panel.open {
+            right: 0;
+        }
+
+        .history-header {
+            padding: 24px;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        .history-header h2 {
+            font-size: 22px;
+            color: #202124;
+            font-weight: 400;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #5f6368;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .close-btn:hover {
+            background: #f1f3f4;
+        }
+
+        .version-list {
+            padding: 16px 24px;
+        }
+
+        .version-item {
+            padding: 16px;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: white;
+        }
+
+        .version-item:hover {
+            background: #f8f9fa;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+            border-color: #dadce0;
+        }
+
+        .version-item.edit-mode {
+            border-left: 4px solid #1a73e8;
+        }
+
+        .version-item.edit-mode:hover {
+            background: #e8f0fe;
+            border-color: #4285f4;
+        }
+
+        .version-time {
+            font-size: 13px;
+            color: #5f6368;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .version-preview {
+            font-size: 14px;
+            color: #202124;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.4;
+        }
+
+        .version-preview strong {
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #5f6368;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 8px 10px 1px rgba(0,0,0,.14), 0 3px 14px 2px rgba(0,0,0,.12), 0 5px 5px -3px rgba(0,0,0,.2);
+            z-index: 2000;
+            min-width: 450px;
+            max-width: 500px;
+        }
+
+        .edit-modal.show {
+            display: block;
+            animation: modalFadeIn 0.2s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -48%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1999;
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+
+        .modal-header {
+            padding: 24px 24px 20px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            color: #202124;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif;
+            color: #202124;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 8px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            border-top: 1px solid #e8eaed;
+            background: #f8f9fa;
+        }
+
+        .modal-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: 'Google Sans', 'Roboto', 'Arial', sans-serif;
+        }
+
+        .modal-btn-cancel {
+            background: transparent;
+            color: #1a73e8;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8f0fe;
+        }
+
+        .modal-btn-save {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .modal-btn-save:hover {
+            background: #1765cc;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+
+        .edit-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 8px;
+            background: #34a853;
+            color: white;
+            font-size: 11px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .auto-save-indicator {
+            font-size: 12px;
+            color: #5f6368;
+            margin-left: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .editor-wrapper {
+                margin: 0;
+                box-shadow: none;
+            }
+
+            .editor {
+                padding: 40px 24px;
+            }
+
+            .toolbar {
+                padding: 8px;
+            }
+
+            .history-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .edit-modal {
+                min-width: 90%;
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center;">
+                <input type="text" class="doc-title" id="docTitle" value="Untitled Document" placeholder="Untitled document">
+                <span class="auto-save-indicator" id="autoSaveIndicator"></span>
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-primary" onclick="saveVersion()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Save Version
+                </button>
+                <button class="btn btn-secondary" onclick="toggleHistory()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    History
+                    <span class="edit-indicator" id="editIndicator" style="display: none;">Edit</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="execCmd('undo')" title="Undo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M3 7v6h6"/>
+                        <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('redo')" title="Redo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M21 7v6h-6"/>
+                        <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <select onchange="execCmd('fontName', this.value)" title="Font">
+                    <option value="Arial" selected>Arial</option>
+                    <option value="Calibri">Calibri</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                <select onchange="execCmd('fontSize', this.value)" title="Font size">
+                    <option value="1">8</option>
+                    <option value="2">10</option>
+                    <option value="3">12</option>
+                    <option value="4" selected>14</option>
+                    <option value="5">18</option>
+                    <option value="6">24</option>
+                    <option value="7">36</option>
+                </select>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="execCmd('bold')" title="Bold">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                        <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('italic')" title="Italic">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="19" y1="4" x2="10" y2="4"/>
+                        <line x1="14" y1="20" x2="5" y2="20"/>
+                        <line x1="15" y1="4" x2="9" y2="20"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('underline')" title="Underline">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                        <line x1="4" y1="21" x2="20" y2="21"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('strikeThrough')" title="Strikethrough">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M17 5H7a2 2 0 0 0 0 4h10a2 2 0 0 1 0 4H7"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <div class="color-picker-wrapper" title="Text color">
+                    <div class="color-btn">
+                        <input type="color" id="textColor" value="#000000">
+                    </div>
+                </div>
+                <div class="color-picker-wrapper" title="Highlight color">
+                    <div class="color-btn">
+                        <input type="color" id="bgColor" value="#ffff00">
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="execCmd('justifyLeft')" title="Align left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="17" y1="10" x2="3" y2="10"/>
+                        <line x1="21" y1="6" x2="3" y2="6"/>
+                        <line x1="21" y1="14" x2="3" y2="14"/>
+                        <line x1="17" y1="18" x2="3" y2="18"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('justifyCenter')" title="Align center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="18" y1="10" x2="6" y2="10"/>
+                        <line x1="21" y1="6" x2="3" y2="6"/>
+                        <line x1="21" y1="14" x2="3" y2="14"/>
+                        <line x1="18" y1="18" x2="6" y2="18"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('justifyRight')" title="Align right">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="21" y1="10" x2="7" y2="10"/>
+                        <line x1="21" y1="6" x2="3" y2="6"/>
+                        <line x1="21" y1="14" x2="3" y2="14"/>
+                        <line x1="21" y1="18" x2="7" y2="18"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('justifyFull')" title="Justify">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="21" y1="10" x2="3" y2="10"/>
+                        <line x1="21" y1="6" x2="3" y2="6"/>
+                        <line x1="21" y1="14" x2="3" y2="14"/>
+                        <line x1="21" y1="18" x2="3" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="execCmd('insertUnorderedList')" title="Bulleted list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('insertOrderedList')" title="Numbered list">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="10" y1="6" x2="21" y2="6"/>
+                        <line x1="10" y1="12" x2="21" y2="12"/>
+                        <line x1="10" y1="18" x2="21" y2="18"/>
+                        <path d="M4 6h1v4"/>
+                        <path d="M4 10h2"/>
+                        <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="execCmd('indent')" title="Increase indent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polyline points="3 8 7 12 3 16"/>
+                        <line x1="21" y1="12" x2="11" y2="12"/>
+                        <line x1="21" y1="6" x2="11" y2="6"/>
+                        <line x1="21" y1="18" x2="11" y2="18"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="execCmd('outdent')" title="Decrease indent">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <polyline points="7 8 3 12 7 16"/>
+                        <line x1="21" y1="12" x2="11" y2="12"/>
+                        <line x1="21" y1="6" x2="11" y2="6"/>
+                        <line x1="21" y1="18" x2="11" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" onclick="insertLink()" title="Insert link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                </button>
+                <button class="toolbar-btn" onclick="clearFormatting()" title="Clear formatting">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M4 7V4h16v3"/>
+                        <path d="M5 20h6"/>
+                        <path d="M13 4L8 20"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="editor-wrapper">
+            <div class="editor" id="editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+    </div>
+
+    <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+            <h2>Version history</h2>
+            <button class="close-btn" onclick="toggleHistory()">✕</button>
+        </div>
+        <div class="version-list" id="versionList">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <p>No versions yet</p>
+                <p style="font-size: 12px; margin-top: 8px;">Click "Save Version" to create your first snapshot</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeEditModal()"></div>
+    <div class="edit-modal" id="editModal">
+        <div class="modal-header">
+            <h3>Edit timestamp</h3>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Date and time</label>
+                <input type="text" id="timestampInput" placeholder="e.g., 1/15/2024, 3:45:00 PM">
+                <div class="form-help">
+                    Enter any date and time format you prefer
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeEditModal()">Cancel</button>
+            <button class="modal-btn modal-btn-save" onclick="saveTimestamp()">Save</button>
+        </div>
+    </div>
+
+    <script>
+        let versions = [];
+        let editMode = false;
+        let currentEditingId = null;
+        let wordCount = 0;
+        let lastSavedContent = '';
+
+        // Load data from localStorage
+        function loadFromStorage() {
+            const savedVersions = localStorage.getItem('documentVersions');
+            const savedContent = localStorage.getItem('currentDocument');
+            const savedTitle = localStorage.getItem('documentTitle');
+
+            if (savedVersions) {
+                versions = JSON.parse(savedVersions);
+                updateVersionList();
+            }
+
+            if (savedContent) {
+                document.getElementById('editor').innerHTML = savedContent;
+                lastSavedContent = savedContent;
+            }
+
+            if (savedTitle) {
+                document.getElementById('docTitle').value = savedTitle;
+            }
+        }
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('documentVersions', JSON.stringify(versions));
+            localStorage.setItem('currentDocument', document.getElementById('editor').innerHTML);
+            localStorage.setItem('documentTitle', document.getElementById('docTitle').value);
+            
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.textContent = 'Saved';
+            setTimeout(() => {
+                indicator.textContent = '';
+            }, 2000);
+        }
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+        }
+
+        // Color pickers
+        document.getElementById('textColor').addEventListener('change', function(e) {
+            execCmd('foreColor', e.target.value);
+        });
+
+        document.getElementById('bgColor').addEventListener('change', function(e) {
+            execCmd('backColor', e.target.value);
+        });
+
+        function insertLink() {
+            const url = prompt('Enter the URL:');
+            if (url) {
+                execCmd('createLink', url);
+            }
+        }
+
+        function clearFormatting() {
+            execCmd('removeFormat');
+            execCmd('unlink');
+        }
+
+        function saveVersion() {
+            const editor = document.getElementById('editor');
+            const docTitle = document.getElementById('docTitle').value;
+            const content = editor.innerHTML;
+            const timestamp = new Date().toLocaleString();
+
+            const version = {
+                id: Date.now(),
+                title: docTitle,
+                content: content,
+                timestamp: timestamp,
+                preview: editor.innerText.substring(0, 100)
+            };
+
+            versions.unshift(version);
+            saveToStorage();
+            updateVersionList();
+            alert('✓ Version saved successfully!');
+        }
+
+        function updateVersionList() {
+            const versionList = document.getElementById('versionList');
+            
+            if (versions.length === 0) {
+                versionList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <p>No versions yet</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Click "Save Version" to create your first snapshot</p>
+                    </div>
+                `;
+                return;
+            }
+
+            versionList.innerHTML = versions.map(version => `
+                <div class="version-item ${editMode ? 'edit-mode' : ''}" onclick="handleVersionClick(${version.id})">
+                    <div class="version-time">
+                        ${version.timestamp}
+                    </div>
+                    <div class="version-preview"><strong>${version.title}</strong></div>
+                    <div class="version-preview" style="margin-top: 4px;">${version.preview}...</div>
+                </div>
+            `).join('');
+        }
+
+        function handleVersionClick(id) {
+            if (editMode) {
+                openEditModal(id);
+            } else {
+                restoreVersion(id);
+            }
+        }
+
+        function openEditModal(id) {
+            currentEditingId = id;
+            const version = versions.find(v => v.id === id);
+            if (version) {
+                document.getElementById('timestampInput').value = version.timestamp;
+                document.getElementById('editModal').classList.add('show');
+                document.getElementById('modalOverlay').classList.add('show');
+                document.getElementById('timestampInput').focus();
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            document.getElementById('modalOverlay').classList.remove('show');
+            currentEditingId = null;
+        }
+
+        function saveTimestamp() {
+            const newTimestamp = document.getElementById('timestampInput').value.trim();
+            if (newTimestamp && currentEditingId) {
+                const version = versions.find(v => v.id === currentEditingId);
+                if (version) {
+                    version.timestamp = newTimestamp;
+                    saveToStorage();
+                    updateVersionList();
+                }
+            }
+            closeEditModal();
+        }
+
+        function restoreVersion(id) {
+            const version = versions.find(v => v.id === id);
+            if (version && confirm('Restore this version? Current content will be replaced.')) {
+                document.getElementById('editor').innerHTML = version.content;
+                document.getElementById('docTitle').value = version.title;
+                saveToStorage();
+                toggleHistory();
+            }
+        }
+
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            panel.classList.toggle('open');
+        }
+
+        // Secret edit mode activation
+        const editor = document.getElementById('editor');
+
+        editor.addEventListener('input', function(e) {
+            const text = editor.innerText;
+            const lastChars = text.slice(-5);
+            
+            // Check for /cvh/ trigger
+            if (lastChars === '/cvh/') {
+                editMode = !editMode;
+                
+                // Remove the /cvh/ from the editor
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                const textNode = range.startContainer;
+                
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    const text = textNode.textContent;
+                    textNode.textContent = text.slice(0, -5);
+                }
+                
+                // Show/hide edit indicator
+                const indicator = document.getElementById('editIndicator');
+                if (editMode) {
+                    indicator.style.display = 'inline-block';
+                } else {
+                    indicator.style.display = 'none';
+                }
+                
+                // Update version list if history is open
+                if (document.getElementById('historyPanel').classList.contains('open')) {
+                    updateVersionList();
+                }
+                
+                return;
+            }
+
+            // Auto-save logic: count words and save every 10 words
+            const currentContent = editor.innerHTML;
+            const currentWords = editor.innerText.trim().split(/\s+/).filter(w => w.length > 0).length;
+            
+            const wordDifference = Math.abs(currentWords - wordCount);
+            
+            if (wordDifference >= 10) {
+                wordCount = currentWords;
+                lastSavedContent = currentContent;
+                saveToStorage();
+            }
+        });
+
+        // Save on input with debounce
+        let saveTimeout;
+        editor.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveToStorage();
+            }, 3000);
+        });
+
+        // Save on title change
+        document.getElementById('docTitle').addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveToStorage();
+            }, 2000);
+        });
+
+        // Load on page load
+        window.addEventListener('load', loadFromStorage);
+
+        // Enter key in modal
+        document.getElementById('timestampInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                saveTimestamp();
+            }
+        });
+
+        // Escape key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('editModal').classList.contains('show')) {
+                    closeEditModal();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
